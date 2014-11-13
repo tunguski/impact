@@ -8,6 +8,21 @@ body table.board tr td {
   border-top: 0;
 }
 
+body table.summary {
+  margin-top: 10px;
+}
+
+body table.summary tr:first-child td {
+  border-top: 0;
+}
+
 td.checked {
   background-color: #ddd;
 }
+
+.container > .row > div {
+  background-color: #fafafa;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
