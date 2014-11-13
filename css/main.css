@@ -1,0 +1,13 @@
+body > div {
+  margin: 20px;
+}
+
+body table.board tr td {
+  text-align: center;
+  cursor: pointer;
+  border-top: 0;
+}
+
+td.checked {
+  background-color: #ddd;
+}

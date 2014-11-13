@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
+  </head>
+  <body>
+
+  <div class="container" ng-controller="TestCtrl" ng-cloak>
+    <div class="row">
+      <div class="col-sm-6 col-sm-offset-3">
+        <table class="table table-condensed">
+          <tr>
+            <td>
+              Poziom trudności (czym mniej tym trudniej)
+            </td>
+            <td>
+              <select ng-model="level" ng-options="elem for elem in levels"></select>
+            </td>
+          </tr>
+          <tr>
+            <td>Gracz</td>
+            <td ng-bind="state.points[0]"></td>
+          </tr>
+          <tr>
+            <td>Komputer</td>
+            <td ng-bind="state.points[1]"></td>
+          </tr>
+        </table>
+        <div class="alert" ng-class="state.points[0] > state.points[1] ? 'alert-success' : state.points[0] == state.points[1] ? 'alert-warning' : 'alert-danger'" role="alert" ng-if="state.endGame">
+          <span>{{state.points[0] > state.points[1] ? 'Wygrałeś' : state.points[0] == state.points[1] ? 'Remis' : 'Przegrałeś'}} {{state.points[0]}} do {{state.points[1]}}</span>
+          <a class="btn btn-primary btn-xs pull-right" ng-click="restart()">Zagraj ponownie</a>
+        </div>
+        <div class="alert alert-warning" role="alert" ng-if="info && !state.endGame" ng-bind="info"></div>
+        <table class="table board">
+          <tr class="row" ng-repeat="row in state.rows">
+            <td class="col-sm-1" ng-class="col.checked ? 'checked' : ''" ng-style="{'background-color': colorGradient(row, col), 'color': fontColor(col), 'font-style': fontStyle(col)}" ng-repeat="col in row.cols" ng-bind="col.x" ng-click="clicked(state, col, 0)">
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.js"></script>
+  <script type="text/javascript" src="http://code.angularjs.org/1.3.2/angular.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap-tpls.js"></script>
+  <script type="text/javascript" src="js/coffee-script.js"></script>
+  <script type="text/coffeescript" src="js/main.coffee"></script>
+  </body>
+</html>
