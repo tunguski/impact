@@ -1,6 +1,15 @@
-app = angular.module 'App', []
+app = angular.module 'App', ['firebase']
 
-app.controller 'TestCtrl', ($scope, $timeout) ->
+app.controller 'TestCtrl', ($scope, $timeout, $firebase) ->
+  $scope.db = new Firebase("https://brilliant-fire-2019.firebaseio.com/");
+  $scope.testFirebase = $firebase($scope.db);
+  gameInstance = '' + new Date().getTime();
+  obj = {};
+  obj[gameInstance] = { moveCounter: 0, moves: [] };
+  $scope.testFirebase.$update(obj);
+  $scope.gameInstance = $firebase($scope.db.child(gameInstance)).$asObject();
+  $scope.gameMoves = $firebase($scope.db.child(gameInstance).child('moves')).$asArray();
+
   $scope.levels = [1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,30]
   $scope.level = 30
 
@@ -16,24 +25,24 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
       state.rows.push(row)
       row.cols = ({ x: j, y: i, row: row, pressure : [0, 0, 0], val: [255, 255, 255], owner: -1 } for j in [0..9])
     state
-
+    
   # state
   $scope.restart = () -> $scope.state = $scope.emptyState()
   $scope.restart()
-
+         
   # pressure
   pressure = (from, to) ->
     if from == to
       return 1024
-    square = (x) -> x * x
+    square = (x) -> x * x                
     val = 128 / Math.sqrt((square(from.x-to.x) + square(from.y-to.y)))
     if val > 1000000
       console.log('pressure: ' + val)
     return val
-
+    
   # add pressure
   addPressure = (col, pressure, index) -> col.pressure[index] = col.pressure[index] + pressure
-
+    
   # recalculate pressure
   recalculatePressure = (state, col) ->
     col.pressure = [0, 0, 0]
@@ -43,7 +52,7 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
         addPressure(col, pressure(pressing, col), i)
       col.val[i] = (255 - Math.min(255, Math.round(col.pressure[i])))
     col.owner = $scope.findOwner(col)
-
+        
   # recalculate points
   $scope.recalculatePoints = (state) ->
     state.points = [0, 0, 0]
@@ -51,7 +60,7 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
       for col in row.cols
         if col.owner >= 0
           state.points[col.owner] = state.points[col.owner] + 1
-
+        
   # computer move
   $scope.calculateComputerMove = (actualState, playerIndex) ->
     maxPoints = -1
@@ -77,29 +86,38 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
             maxPressure = movePressure
             bestMove = move
     return bestMove
-
+          
 
   # clicked!
   $scope.clicked = (state, col, userIndex) ->
     if state.endGame
       return
     $scope.info = null
-    if typeof col.checked == 'undefined' and (col.owner == -1 or col.owner == userIndex)
-      col.checked = userIndex
-      state.checked[userIndex].push(col)
-      recalculatePressure(state, col) for col in row.cols for row in state.rows
-      $scope.recalculatePoints(state)
-    else
-      $scope.info = 'Próba zajecia zajetego pola'
-
+    $scope.gameInstance.moveCounter = $scope.gameInstance.moveCounter + 1;
+    $scope.gameMoves.$add({
+      x: col.x,
+      y: col.y,
+      val: col.val
+    });
+    
     if userIndex == 0
       # move in copied state - need to be transformed
       computerMove = $scope.calculateComputerMove(state, 1)
       # transform to this world
       computerMove = state.rows[computerMove.y].cols[computerMove.x]
+
+    if typeof col.checked == 'undefined' and (col.owner == -1 or col.owner == userIndex)
+      col.checked = userIndex
+      state.checked[userIndex].push(col) 
+      recalculatePressure(state, col) for col in row.cols for row in state.rows
+      $scope.recalculatePoints(state)
+    else
+      $scope.info = 'Próba zajecia zajetego pola'
+        
+    if userIndex == 0
       $scope.clicked(state, computerMove, 1)
     $scope.checkIfEnd(state)
-
+    
   # is it end of game?
   $scope.checkIfEnd = (state) ->
     for x in [0..9]
@@ -107,8 +125,9 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
         if state.rows[y].cols[x].owner < 0
           return false
     state.endGame = true
+    # $scope.messages.$add({from: name, body: $scope.msg});
     true
-
+            
   # color gradient
   $scope.colorGradient = (row, col) ->
     if typeof col.checked != 'undefined'
@@ -132,7 +151,7 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
         # if pressure is equal, nobody owns field
         owner = -1
     if col.val[owner] < 64 then owner else -1
-
+    
   # font color
   $scope.fontColor = (col) ->
     owner = col.owner
@@ -140,15 +159,15 @@ app.controller 'TestCtrl', ($scope, $timeout) ->
     for i in [0..2]
       color = color + (if i == owner then 'cc' else '00')
     color
-
+    
   # font style
   $scope.fontStyle = (col) ->
     if col.owner >= 0 then 'italic' else 'initial'
-
+      
 
 # Array remove()
-Array.prototype.remove = (elem) ->
-  if this.indexOf(elem) >= 0
+Array.prototype.remove = (elem) -> 
+  if this.indexOf(elem) >= 0 
     this.splice(this.indexOf(elem), 1)
 
 angular.bootstrap document, ['App']
